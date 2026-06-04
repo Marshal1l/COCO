@@ -1,0 +1,21 @@
+[submodule "Firecracker-CCA"]
+	path = Firecracker-CCA
+	url = https://github.com/Marshal1l/COCO-Firecracker-CCA.git
+[submodule "firecracker-deps"]
+	path = firecracker-deps
+	url = https://github.com/Marshal1l/COCO-firecracker-deps.git
+[submodule "guest-components"]
+	path = guest-components
+	url = https://github.com/Marshal1l/COCO-guest-components.git
+[submodule "guest-pull-snapshotter"]
+	path = guest-pull-snapshotter
+	url = https://github.com/Marshal1l/COCO-guest-pull-snapshotter.git
+[submodule "kata-containers-cca"]
+	path = kata-containers-cca
+	url = https://github.com/Marshal1l/COCO-kata-containers-cca.git
+[submodule "linux-image-share"]
+	path = linux-image-share
+	url = https://github.com/Marshal1l/COCO-linux-image-share.git
+[submodule "opencca"]
+	path = opencca
+	url = https://github.com/Marshal1l/COCO-opencca.git

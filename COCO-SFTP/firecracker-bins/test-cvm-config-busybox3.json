@@ -1,0 +1,27 @@
+{
+  "boot-source": {
+    "kernel_image_path": "/root/COCO-SFTP/firecracker-bins/Image",
+    "boot_args": "console=ttyS0 root=/dev/vda rw rootfstype=ext4 init=/bin/sh"
+  },
+  "drives": [
+    {
+      "drive_id": "rootfs",
+      "path_on_host": "/root/COCO-SFTP/images/rootfs.ext4",
+      "is_root_device": false,
+      "is_read_only": false
+    }
+  ],
+  "machine-config": {
+    "vcpu_count": 1,
+    "mem_size_mib": 256,
+    "cpu_template": null,
+    "realm_config": {
+      "hash_algorithm": "sha256"
+    }
+  },
+  "vsock": {
+    "vsock_id": "vsock0",
+    "guest_cid": 3,
+    "uds_path": "/tmp/v3sock"
+  }
+}

@@ -1,0 +1,47 @@
+# Workspace-local build and runtime outputs.
+artifacts/
+COCO-SFTP/MANIFEST.generated.txt
+COCO-SFTP/log/
+COCO-SFTP/images/mnt-*/
+COCO-SFTP/images/lib/
+COCO-SFTP/firecracker-bins/firecracker
+COCO-SFTP/firecracker-bins/Image
+COCO-SFTP/guest-pull/
+COCO-SFTP/kata-bins/
+COCO-SFTP/qemu-bins/qemu-special
+!COCO-SFTP/qemu-bins/libaio.so.1
+
+# Large runtime assets are published through GitHub Releases, not git history.
+COCO-SFTP/images/*.img
+COCO-SFTP/images/*.ext4
+COCO-SFTP/qemu-bins/qemu-special
+COCO-SFTP/linux-host-kernel/
+COCO-SFTP/opencca-assets/
+opencca/rootfs/
+opencca/snapshot/
+opencca/linux/vmlinux*
+opencca/linux/.tmp_*
+opencca/linux/linux.tar.gz
+
+# General generated files.
+*.o
+*.a
+*.so
+*.so.*
+*.elf
+*.bin
+*.img
+*.ext4
+*.deb
+*.tar
+*.tar.gz
+*.tgz
+*.zst
+*.zip
+target/
+build/
+out/
+.cache/
+.vscode/
+__pycache__/
+*.pyc

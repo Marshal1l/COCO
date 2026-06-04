@@ -1,0 +1,5 @@
+# Relative paths uploaded to the Marshal1l/COCO GitHub release.
+COCO-SFTP/images/kata-containers-cca.img
+COCO-SFTP/images/rootfs.ext4
+COCO-SFTP/qemu-bins/qemu-special
+opencca/rootfs/opencca-image-rockchip-rock5b-rk3588.img

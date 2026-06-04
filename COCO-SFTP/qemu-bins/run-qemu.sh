@@ -1,0 +1,15 @@
+./qemu-special \
+    -M virt,confidential-guest-support=rme0\
+    -object rme-guest,id=rme0,measurement-algo=sha512 \
+    -nodefaults \
+    -chardev stdio,mux=on,id=virtiocon0,signal=off \
+    -device virtio-serial-pci \
+    -dtb /root/COCO-SFTP/qemu-bins/qemu-gen.dtb \
+    -device virtconsole,chardev=virtiocon0 \
+    -mon chardev=virtiocon0,mode=readline \
+    -kernel /root/COCO-SFTP/firecracker-bins/Image \
+    -device virtio-blk-pci,disable-modern=false,drive=image0,config-wce=off,share-rw=on,serial=image0 \
+    -drive id=image0,file=/root/COCO-SFTP/images/rootfs.ext4,aio=threads,format=raw,if=none,readonly=off \
+    -cpu host -M virt -enable-kvm -M gic-version=3,its=on \
+    -smp 2 -m 512M -nographic \
+    -append "console=hvc0 root=/dev/vda  rw earlyprintk=ttyS0"

@@ -1,0 +1,6 @@
+socket = "unix:///run/confidential-containers/cdh.sock"
+[kbc]
+name = "cc_kbc"
+url = "http://172.23.41.54:8080"
+[image]
+max_concurrent_layer_downloads_per_image = 3

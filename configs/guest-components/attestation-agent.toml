@@ -1,0 +1,5 @@
+[token_configs]
+[token_configs.coco_as]
+url = "http://172.23.41.54:50004"
+[token_configs.kbs]
+url = "http://172.23.41.54:8080"
