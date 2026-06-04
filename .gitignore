@@ -40,6 +40,8 @@ opencca/linux/linux.tar.gz
 *.zip
 target/
 build/
+!scripts/build/
+!scripts/build/*.sh
 out/
 .cache/
 .vscode/
