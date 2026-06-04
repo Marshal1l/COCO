@@ -27,7 +27,6 @@ while IFS= read -r rel || [[ -n "$rel" ]]; do
     gh release download "$TAG" \
         --repo "$REPO" \
         --pattern "$asset" \
-        --clobber \
         --dir "$tmp_dir"
     [[ -f "$tmp_dir/$asset" ]] || coco_die "missing downloaded asset: $asset"
     install -D -m0644 "$tmp_dir/$asset" "$dst"
