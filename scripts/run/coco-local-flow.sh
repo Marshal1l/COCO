@@ -39,7 +39,8 @@ Options:
 Environment:
   COCO_SFTP_ROOT          Local runtime tree. Default: \$COCO_ROOT_DIR/COCO-SFTP
   COCO_SFTP_REMOTE_ROOT   Remote runtime tree. Default: /root/COCO-SFTP
-  COCO_REMOTE_HOST        Remote SSH target. Default: root@192.168.137.10
+  COCO_REMOTE_HOST        Remote SSH target. Default: root@192.168.31.18
+  COCO_REMOTE_PASSWORD    Optional SSH password. If set, sshpass is used.
 EOF
 }
 
@@ -67,8 +68,8 @@ build_component() {
             ;;
         guest-components)
             run_step "build guest components" "$COCO_ROOT_DIR/scripts/build/build-guest-components.sh"
-            run_step "install guest components into local Kata image if needed" \
-                "$COCO_ROOT_DIR/scripts/image/install-guest-components-into-kata-image.sh" --install-if-missing
+            run_step "install guest components into local Kata image" \
+                "$COCO_ROOT_DIR/scripts/image/install-guest-components-into-kata-image.sh"
             ;;
         guest-pull-snapshotter)
             run_step "build guest-pull snapshotter" "$COCO_ROOT_DIR/scripts/build/build-guest-pull-snapshotter.sh"

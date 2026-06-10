@@ -32,6 +32,7 @@ Installed in the guest image:
   /root/guest-components/cdh.toml
   /etc/attestation-agent.conf
   /etc/confidential-data-hub.conf
+  /etc/resolv.conf
 
 The default debugfs write path updates the image offline and does not require sudo.
 Set INSTALL_METHOD=mount to use losetup/mount/cp/umount with local sudo.
@@ -131,6 +132,12 @@ verify_ext4_contents() {
             missing=1
         fi
     done
+    if debugfs -R "cat /etc/resolv.conf" "$part" 2>/dev/null | grep -q '^nameserver 192\.168\.31\.1'; then
+        printf '[ok:image] /etc/resolv.conf\n'
+    else
+        printf '[missing:image] /etc/resolv.conf nameserver 192.168.31.1\n' >&2
+        missing=1
+    fi
 
     [[ "$missing" -eq 0 ]]
 }
@@ -177,6 +184,7 @@ debugfs_install_file() {
 install_payload_into_ext4() {
     local part="$1"
     local bin
+    local tmp_resolv
 
     debugfs_ensure_dir "$part" /usr
     debugfs_ensure_dir "$part" /usr/local
@@ -193,6 +201,15 @@ install_payload_into_ext4() {
     debugfs_install_file "$part" "$CONFIG_DIR/cdh.toml" /root/guest-components/cdh.toml 0100644
     debugfs_install_file "$part" "$CONFIG_DIR/attestation-agent.toml" /etc/attestation-agent.conf 0100644
     debugfs_install_file "$part" "$CONFIG_DIR/cdh.toml" /etc/confidential-data-hub.conf 0100644
+
+    tmp_resolv="$(mktemp "${TMPDIR:-/tmp}/coco-guest-resolv.XXXXXX")"
+cat > "$tmp_resolv" <<'EOF'
+nameserver 192.168.31.1
+options timeout:2 attempts:3
+search .
+EOF
+    debugfs_install_file "$part" "$tmp_resolv" /etc/resolv.conf 0100644
+    rm -f "$tmp_resolv"
 }
 
 install_with_debugfs() {
@@ -255,6 +272,11 @@ install_with_mount() {
     sudo install -m0644 "$CONFIG_DIR/cdh.toml" "$MOUNT_DIR/root/guest-components/cdh.toml"
     sudo install -m0644 "$CONFIG_DIR/attestation-agent.toml" "$MOUNT_DIR/etc/attestation-agent.conf"
     sudo install -m0644 "$CONFIG_DIR/cdh.toml" "$MOUNT_DIR/etc/confidential-data-hub.conf"
+    sudo tee "$MOUNT_DIR/etc/resolv.conf" >/dev/null <<'EOF'
+nameserver 192.168.31.1
+options timeout:2 attempts:3
+search .
+EOF
 
     sync
     sudo umount "$MOUNT_DIR"

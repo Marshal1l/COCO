@@ -110,3 +110,21 @@ sudo nerdctl run --net=host --annotation "io.kubernetes.cri.image-name=docker.io
 cd /root/COCO-SFTP
 ./scripts/remote/run/run-image-cache-smoke.sh
 ```
+
+当前已验证的 ImageCache 测试固定使用：
+
+```bash
+COCO_REMOTE_PASSWORD=root ./scripts/run/run-image-cache-smoke-remote.sh
+```
+
+默认镜像和网络为 `docker.m.daocloud.io/library/busybox:latest`、
+`coco-bridge`、DNS `192.168.31.1`。连续测试时脚本只做轻量检查，不会每次
+重装 CNI 或重启 `guest-pull-snapshotter/containerd`；需要重置运行环境时再加
+`--prepare`。
+
+RMM 修改后的固定固件流程：
+
+```bash
+./scripts/firmware/build-rmm-uboot.sh
+COCO_RPI_PASSWORD=root ./scripts/firmware/flash-rk3588-firmware-via-pi.sh --flash-mmc --wait-rk
+```

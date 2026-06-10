@@ -33,6 +33,7 @@ Options:
 Environment:
   COCO_REMOTE_HOST         Remote SSH target. Default: $COCO_REMOTE_HOST
   COCO_REMOTE_SSH_PORT     Remote SSH port. Default: $COCO_REMOTE_SSH_PORT
+  COCO_REMOTE_PASSWORD     Optional SSH password. If set, sshpass is used.
   COCO_SFTP_REMOTE_ROOT    Remote runtime root. Default: $COCO_SFTP_REMOTE_ROOT
 EOF
 }
@@ -48,8 +49,17 @@ run_cmd() {
 
 run_remote() {
     local command="$1"
-    run_cmd ssh -p "$COCO_REMOTE_SSH_PORT" -oBatchMode=no -oStrictHostKeyChecking=accept-new \
-        "$COCO_REMOTE_HOST" "$command"
+    local ssh_cmd=(
+        ssh
+        -p "$COCO_REMOTE_SSH_PORT"
+        -oBatchMode=no
+        -oStrictHostKeyChecking=accept-new
+    )
+    if [[ -n "$COCO_REMOTE_PASSWORD" ]]; then
+        coco_require_cmd sshpass
+        ssh_cmd=(sshpass -p "$COCO_REMOTE_PASSWORD" "${ssh_cmd[@]}")
+    fi
+    run_cmd "${ssh_cmd[@]}" "$COCO_REMOTE_HOST" "$command"
 }
 
 build_component() {
@@ -68,7 +78,7 @@ build_component() {
             ;;
         guest-components)
             run_cmd "$COCO_ROOT_DIR/scripts/build/build-guest-components.sh"
-            run_cmd "$COCO_ROOT_DIR/scripts/image/install-guest-components-into-kata-image.sh" --install-if-missing
+            run_cmd "$COCO_ROOT_DIR/scripts/image/install-guest-components-into-kata-image.sh"
             ;;
         *)
             coco_die "unknown component: $1"

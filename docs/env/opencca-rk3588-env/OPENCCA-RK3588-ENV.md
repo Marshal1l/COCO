@@ -141,6 +141,13 @@ SimpleCom.exe COM6 --baud-rate 1500000
 
 # 三.网络配置
 
+当前 COCO/RK3588 实验环境：
+
+- RK3588：`192.168.31.18`，SSH `root/root`
+- Raspberry Pi 电源/刷机控制机：`192.168.31.52`，SSH `mzh/root`
+- 本地 COCO 工作区：`/home/mzh/RK3588/COCO`
+- RK3588 远端运行目录：`/root/COCO-SFTP`
+
 ### 使用以太网连接，用PC共享网络提供以太网连接
 
 ### **让rk3588使用静态ip**
@@ -153,17 +160,16 @@ Name=enP4p65s0
 
 [Network]
 DHCP=no
-Address=192.168.137.10/24
-Gateway=192.168.137.1
-DNS=192.168.137.1
-DNS=8.8.8.8
+Address=192.168.31.18/24
+Gateway=192.168.31.1
+DNS=192.168.31.1
 
 [Link]
 RequiredForOnline=yes
 
 [Route]
 Destination=0.0.0.0/0
-Gateway=192.168.137.1
+Gateway=192.168.31.1
 
 sudo systemctl restart systemd-networkd
 ```
@@ -180,11 +186,11 @@ sudo passwd root
 sudo systemctl restart systemd-networkd
 
 sudo ip route del default
-sudo ip route add default via 192.168.137.1 dev enP4p65s0
+sudo ip route add default via 192.168.31.1 dev enP4p65s0
 
 注意 route 冲突
 
-sudo echo "nameserver 8.8.8.8" > /etc/resolv.conf
+sudo sh -c 'printf "nameserver 192.168.31.1\n" > /etc/resolv.conf'
 ```
 
 ### APT换源
@@ -232,7 +238,7 @@ Subsystem sftp internal-sftp
 EOF
 
 sudo systemctl restart ssh
-ssh-keygen -R 192.168.137.59
+ssh-keygen -R 192.168.31.18
 ```
 
 # 四.配置containerd环境
@@ -357,36 +363,18 @@ sudo modprobe vhost-vsock
 sudo modprobe loop
 SimpleCom.exe COM3 --baud-rate 1500000
 
-sudo nerdctl run --snapshotter guest-pull --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/busybox:latest sh
 
-sudo nerdctl run --net=host --annotation "io.kubernetes.cri.image-name=docker.io/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=true" --snapshotter guest-pull --runtime io.containerd.kata.v2 -it docker.io/library/busybox:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/busybox:latest sh
 
-sudo nerdctl run --net=host --snapshotter guest-pull --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/nginx:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/nginx:latest sh
 
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.1ms.run/library/busybox:latest" --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.1ms.run/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.1ms.run/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.io/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.io/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.io/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.1ms.run/library/node:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/nginx:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/nginx:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.xanderc.top/library/nginx:latest" --annotation "io.kata-containers.is-image-cvm=true" --dns 8.8.8.8 --runtime io.containerd.kata.v2 -it docker.xanderc.top/library/nginx:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.xanderc.top/library/busybox:latest" --annotation "io.kata-containers.is-image-cvm=true" --runtime io.containerd.kata.v2 -it docker.xanderc.top/library/busybox:latest sh
-
-sudo nerdctl run --cgroup-manager=cgroupfs --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.xanderc.top/library/nginx:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.xanderc.top/library/nginx:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --snapshotter guest-pull --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/nginx:latest" --annotation "io.kata-containers.is-image-cvm=false" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/nginx:latest sh
 
 sudo ctr task list
 sudo kata-runtime exec  
  
-sudo nerdctl run --runtime io.containerd.kata.v2 -it docker.xanderc.top/library/busybox:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/busybox:latest sh
  
  
 sudo nerdctl stop $(sudo nerdctl ps -a -q)
@@ -397,7 +385,7 @@ nerdctl container prune
 nerdctl network prune
 nerdctl volume prune
 
-sudo nerdctl run --annotation "io.kubernetes.cri.image-name=docker.1ms.run/library/busybox:latest" --runtime io.containerd.kata.v2 -it docker.1ms.run/library/busybox:latest sh
+sudo nerdctl run --cgroup-manager=cgroupfs --net coco-bridge --dns 192.168.31.1 --annotation "io.kubernetes.cri.image-name=docker.m.daocloud.io/library/busybox:latest" --runtime io.containerd.kata.v2 -it docker.m.daocloud.io/library/busybox:latest sh
 
 sudo systemctl status containerd 
 sudo systemctl restart containerd 
@@ -407,14 +395,14 @@ journalctl -u containerd --no-pager -n 1000 > /root/log_containerd.log
 sudo systemctl status guest-pull-snapshotter
 sudo systemctl restart guest-pull-snapshotter
 
-sudo nerdctl run -it --snapshotter overlayfs --runtime io.containerd.runc.v2 docker.1ms.run/library/busybox:latest sh
+sudo nerdctl run -it --snapshotter overlayfs --runtime io.containerd.runc.v2 docker.m.daocloud.io/library/busybox:latest sh
 
-sudo nerdctl run -it --snapshotter overlayfs --runtime io.containerd.kata.v2 docker.1ms.run/library/busybox:latest sh
+sudo nerdctl run -it --snapshotter overlayfs --runtime io.containerd.kata.v2 docker.m.daocloud.io/library/busybox:latest sh
 
 sudo mount -o remount,size=8G /run
 
-sudo ctr -a /run/containerd/containerd.sock images pull docker.1ms.run/library/alpine:latest
-sudo ctr -a /run/containerd/containerd.sock run -t --rm docker.1ms.run/library/alpine:latest
+sudo ctr -a /run/containerd/containerd.sock images pull docker.m.daocloud.io/library/alpine:latest
+sudo ctr -a /run/containerd/containerd.sock run -t --rm docker.m.daocloud.io/library/alpine:latest
 ```
 
 ## 测试QEMU

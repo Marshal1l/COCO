@@ -22,7 +22,7 @@ Do not use this skill for vmshm proxy/client GPU sharing. Use `gpu-shared-virtua
 
 Work from `/home/mzh/gpu` unless the user gives another checkout.
 
-- Remote SSH target: `root@192.168.137.10`
+- Remote SSH target: `root@192.168.31.18`
 - Remote password: `root`
 - Local artifact root: `/home/mzh/gpu/GPU-SFTP`
 - Remote artifact root: `/root/GPU-SFTP`
@@ -39,7 +39,7 @@ Work from `/home/mzh/gpu` unless the user gives another checkout.
 Prefer the repo scripts over ad hoc SSH. If manual SSH is needed:
 
 ```bash
-ssh -p 22 -oBatchMode=no -oStrictHostKeyChecking=accept-new root@192.168.137.10 '<command>'
+ssh -p 22 -oBatchMode=no -oStrictHostKeyChecking=accept-new root@192.168.31.18 '<command>'
 ```
 
 Use existing `setsid`/`SSH_ASKPASS` wrappers in scripts for noninteractive password auth.
@@ -93,7 +93,7 @@ Use full `--install-host-modules` only for broad module ABI/dependency/Kconfig/i
 ## Sync Policy
 
 Passthrough scripts sync `/home/mzh/gpu/GPU-SFTP/` to
-`root@192.168.137.10:/root/GPU-SFTP/` after relevant builds and exclude
+`root@192.168.31.18:/root/GPU-SFTP/` after relevant builds and exclude
 `log/`, old `firecracker-bins/run-logs/`, and `firecracker-bins/rootfs/` unless
 rootfs sync is explicitly requested. Do not send or overwrite historical logs
 during artifact sync. The repo sync scripts also run

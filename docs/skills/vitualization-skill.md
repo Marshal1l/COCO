@@ -27,7 +27,7 @@ Do not use this skill for single-VM passthrough host-vs-VM performance testing. 
 
 Work from `/home/mzh/gpu` unless the user gives another checkout.
 
-- Remote SSH target: `root@192.168.137.10`
+- Remote SSH target: `root@192.168.31.18`
 - Remote password: `root`
 - Local artifact root: `/home/mzh/gpu/GPU-SFTP`
 - Remote artifact root: `/root/GPU-SFTP`
@@ -64,7 +64,7 @@ the old top-level DTB dump path.
 Prefer the repo scripts over ad hoc SSH. If manual SSH is needed:
 
 ```bash
-ssh -p 22 -oBatchMode=no -oStrictHostKeyChecking=accept-new root@192.168.137.10 '<command>'
+ssh -p 22 -oBatchMode=no -oStrictHostKeyChecking=accept-new root@192.168.31.18 '<command>'
 ```
 
 Use existing `setsid`/`SSH_ASKPASS` wrappers in scripts for noninteractive password auth.
@@ -118,7 +118,7 @@ SFTP vmshm configs live under
 
 ## Sync Policy
 
-Sync `/home/mzh/gpu/GPU-SFTP/` to `root@192.168.137.10:/root/GPU-SFTP/` after relevant builds. Exclude `log/` and old `firecracker-bins/run-logs/`; do not overwrite or fetch historical logs during artifact sync.
+Sync `/home/mzh/gpu/GPU-SFTP/` to `root@192.168.31.18:/root/GPU-SFTP/` after relevant builds. Exclude `log/` and old `firecracker-bins/run-logs/`; do not overwrite or fetch historical logs during artifact sync.
 
 Default rsync exclusions:
 
@@ -132,7 +132,7 @@ rsync -av --info=stats2,name1 \
   --exclude='firecracker-bins/rootfs/' \
   --exclude='linux-host-kernel/' \
   /home/mzh/gpu/GPU-SFTP/ \
-  root@192.168.137.10:/root/GPU-SFTP/
+  root@192.168.31.18:/root/GPU-SFTP/
 ```
 
 Sync rootfs images only when the user asks, when a script explicitly requires it, or when remote preflight shows the needed rootfs is missing.

@@ -100,8 +100,10 @@ default_maxvcpus = 0
 default_bridges = 1
 
 # Default memory size in MiB for SB/VM.
-# If unspecified then it will be set 2048 MiB.
-default_memory = 2048
+# Keep this conservative on RK3588/OpenCCA so the image CVM and runtime CVM
+# can boot concurrently within the available Realm memory. 256 MiB may make
+# guest network/image pull initialization flaky on the RK3588 lab board.
+default_memory = 512
 
 #
 # Default memory slots per SB/VM.
@@ -339,7 +341,7 @@ disable_guest_seccomp = true
 # with `internetworking_model=none`. The tap device will be in the host network namespace and can connect to a bridge
 # (like OVS) directly.
 # (default: false)
-#disable_new_netns = true
+disable_new_netns = false
 
 # if enabled, the runtime will add all the kata processes inside one dedicated cgroup.
 # The container cgroups in the host are not created, just one single cgroup per sandbox.

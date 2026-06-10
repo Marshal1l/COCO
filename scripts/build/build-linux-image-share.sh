@@ -15,9 +15,10 @@ coco_ensure_dir "$LINUX_OUT_DIR" "$(dirname "$DEST_IMAGE")"
 coco_log "building reusable guest kernel from linux-image-share"
 if [[ ! -f "$LINUX_OUT_DIR/.config" ]]; then
     make -C "$LINUX_DIR" O="$LINUX_OUT_DIR" ARCH=arm64 CROSS_COMPILE="$COCO_CROSS_COMPILE" defconfig
-    if [[ -f "$FRAGMENT_CONFIG" ]]; then
-        "$LINUX_DIR/scripts/kconfig/merge_config.sh" -m -O "$LINUX_OUT_DIR" "$LINUX_OUT_DIR/.config" "$FRAGMENT_CONFIG"
-    fi
+fi
+
+if [[ -f "$FRAGMENT_CONFIG" ]]; then
+    "$LINUX_DIR/scripts/kconfig/merge_config.sh" -m -O "$LINUX_OUT_DIR" "$LINUX_OUT_DIR/.config" "$FRAGMENT_CONFIG"
 fi
 
 make -C "$LINUX_DIR" O="$LINUX_OUT_DIR" ARCH=arm64 CROSS_COMPILE="$COCO_CROSS_COMPILE" olddefconfig

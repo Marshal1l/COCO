@@ -5,6 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/remote-install-common.sh"
 require_root
 require_dir "$COCO_ROOT/cni/bin"
 require_file "$COCO_ROOT/configs/cni/10-coco-bridge.conf"
+require_cmd iptables
 
 plugins=(
     bandwidth
@@ -33,6 +34,12 @@ for plugin in "${plugins[@]}"; do
     install -m 0755 "$COCO_ROOT/cni/bin/$plugin" "/opt/cni/bin/$plugin"
 done
 
-cp "$COCO_ROOT"/configs/cni/*.conf /etc/cni/net.d/
+install -m 0644 "$COCO_ROOT/configs/cni/10-coco-bridge.conf" /etc/cni/net.d/10-coco-bridge.conflist
+rm -f /etc/cni/net.d/10-coco-bridge.conf
+
+sysctl -w net.ipv4.ip_forward=1 >/dev/null
+if ! iptables -t nat -C POSTROUTING -s 10.88.0.0/16 ! -o coco0 -j MASQUERADE 2>/dev/null; then
+    iptables -t nat -A POSTROUTING -s 10.88.0.0/16 ! -o coco0 -j MASQUERADE
+fi
 
 log_install "installed CNI plugins and configs"
