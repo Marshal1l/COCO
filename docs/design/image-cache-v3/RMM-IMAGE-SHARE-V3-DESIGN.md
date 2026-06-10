@@ -1879,3 +1879,70 @@ ImageCache smoke: 通过，脚本退出码 0
   - 如果 target walk 没有到 page level，RMM 没有通用分配器来安全拆 RTT；应该由 VMM/KVM 初始化阶段提供 delegated page 并拆分。
 - 不要使用 ASCII `"Erofs"` 判断 EROFS superblock。
   - EROFS magic 是 little-endian `0xE0F5E1E2`，位置在 offset 1024。错误检查会把已经可读的 `/dev/cocoimg0` 误判成失败。
+
+## 2026-06-11 P8 性能优化记录：Image CVM warm cache + fast vsock control plane
+
+已验证改动：
+
+- Image CVM 在 `kata-agent` 完成 `pull_image` 后异步预热 shared rootfs cache。
+  - 预热内容包括只读 rootfs image、RMM share object descriptor 和 OCI `config.json`。
+  - Runtime 后续 `prepare_rootfs(image_ref)` 先查 cache；命中后直接返回 share descriptor，不再重复 CDH `pull_image` 和 rootfs image 构建。
+- `vsock-ttrpc-server` 增加 fast control plane：
+  - `54322`：length-prefixed protobuf request/response，处理 `PrepareRootfsRequest/Response`。
+  - `54321`：保留原 tonic/HTTP2 服务作为 fallback。
+- Runtime `image-rs` 优先请求 `54322`，失败时回退 `54321`。
+- Runtime 增加阶段耗时日志：`prepare_rootfs_fast`、`write_config`、`create_device`、`preflight_device`、`mount_overlay`、`mount_fast_path`。
+- rootfs image 格式候选检查改为 PATH 查找，避免 `mkfs.erofs --help` 返回码导致 EROFS 被误判为不可用。
+- 同一 image digest 被不同 image ref 命中时，cache entry 会按新 ref 写回，避免别名复用时写错 cache key。
+
+性能验证：
+
+```text
+Image: docker.m.daocloud.io/library/busybox:latest
+Network: coco-bridge
+DNS: 192.168.31.1
+Image CVM wait: 15s
+```
+
+关键结果：
+
+```text
+Baseline Runtime guest_pull: 23764 ms
+Warm cache Runtime guest_pull: 1551 ms
+Fast-vsock + EROFS Runtime guest_pull: 1517 ms
+
+Baseline Runtime createContainers: 26.26431284s
+Warm cache Runtime createContainers: 3.760392675s
+Fast-vsock + EROFS Runtime createContainers: 3.724841216s
+```
+
+最新阶段证据：
+
+```text
+shared rootfs cache warmup completed: elapsed_ms=1298, share_id=6
+Shared rootfs cache hit: share_id=6, total_ms=6
+Fast image share request completed: elapsed_ms=921
+Runtime shared rootfs stage prepare_rootfs_fast completed: elapsed_ms=1162
+Runtime shared rootfs stage create_device completed: elapsed_ms=0
+Runtime shared rootfs stage preflight_device completed: fs_type=erofs, elapsed_ms=5
+Runtime shared rootfs stage mount_fast_path completed: elapsed_ms=98
+guest_pull took: 1517 ms
+```
+
+结论：
+
+- 原 23s 级 Runtime `guest_pull` 主要不是 RMM attach/mount 慢，而是 Runtime 请求触发 Image CVM 重复 `pull_image`、rootfs image 构建和 RMM share 创建。
+- warm cache 后，RMM attach/device creation/mount 已降到毫秒到百毫秒级。
+- fast vsock control plane 能去掉部分 tonic/HTTP2 开销，但当前剩余主耗时仍在首次 Runtime->Image CVM vsock 请求/agent RPC 调度路径，而不是 rootfs 数据传输。
+
+后续方向：
+
+- 如果继续压低 1s 左右的 Runtime `guest_pull`，优先考虑让 Runtime CVM 复用长连接，或把 share descriptor 通过 host/shim metadata 提前传入 Runtime，减少 Runtime 内首次 vsock 建连和请求链路。
+- 当前不需要优先优化 RMM window copy 或增大 CMA；最新证据显示它们不是 busybox warm-cache 路径的大头。
+
+完整日志：
+
+```text
+docs/log/imagecache-debug/perf/containerd-imagecache-warm-cache-20260611.log
+docs/log/imagecache-debug/perf/containerd-imagecache-fast-vsock-format-20260611.log
+```

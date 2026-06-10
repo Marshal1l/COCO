@@ -56,3 +56,68 @@ coco-runtime-cvm-ok
 - Only one smoke run was executed for this record.
 - `createContainers TIME` appears once for the Image CVM container and once for the Runtime CVM container; the Runtime CVM value is the one that includes `guest_pull`.
 - Post-success cleanup emitted existing Kata/containerd teardown warnings, but the smoke command exited successfully and no container was left running.
+
+## Optimization Follow-up
+
+### Warm Shared Rootfs Cache
+
+Verified on 2026-06-11 with the same image, network, DNS and 15s Image CVM wait:
+
+| Metric | Baseline | Warm cache |
+| --- | ---: | ---: |
+| Runtime CVM internal `guest_pull took` | 23.764 s | 1.551 s |
+| Runtime CVM `createContainers TIME` | 26.264 s | 3.760 s |
+
+Evidence:
+
+```text
+Image CVM pull took: 5647 ms
+shared rootfs cache warmup completed: elapsed_ms=1354, share_id=4
+Shared rootfs cache hit: share_id=4, total_ms=0
+guest_pull took: 1551 ms
+Runtime createContainers TIME: 3.760392675s
+```
+
+Source log:
+
+```text
+docs/log/imagecache-debug/perf/containerd-imagecache-warm-cache-20260611.log
+```
+
+Conclusion: the previous 23.7s Runtime pull was dominated by Image CVM-side duplicated `pull_image` plus rootfs image/share creation during Runtime `prepare_rootfs`. Moving rootfs image/share creation into Image CVM warmup removes that wait from Runtime startup.
+
+### Fast Vsock Control Plane
+
+Verified on 2026-06-11 after adding a small length-prefixed protobuf protocol on vsock port `54322`, with tonic/HTTP2 port `54321` kept as fallback:
+
+| Metric | Warm cache / tonic | Fast vsock / EROFS |
+| --- | ---: | ---: |
+| Runtime CVM internal `guest_pull took` | 1.551 s | 1.517 s |
+| Runtime CVM `createContainers TIME` | 3.760 s | 3.725 s |
+| Runtime `prepare_rootfs_fast` | n/a | 1.162 s |
+| Runtime `create_device` | n/a | 0 ms |
+| Runtime preflight | n/a | 5 ms |
+| Runtime mount fast path | n/a | 98 ms |
+
+Evidence:
+
+```text
+shared rootfs cache warmup completed: elapsed_ms=1298, share_id=6
+Shared rootfs cache hit: share_id=6, total_ms=6
+Fast image share request completed: elapsed_ms=921
+Runtime shared rootfs stage prepare_rootfs_fast completed: elapsed_ms=1162
+Runtime shared rootfs stage create_device completed: elapsed_ms=0
+Runtime shared rootfs stage preflight_device completed: fs_type=erofs, elapsed_ms=5
+Runtime shared rootfs stage mount_fast_path completed: elapsed_ms=98
+guest_pull took: 1517 ms
+Runtime createContainers TIME: 3.724841216s
+```
+
+Source logs:
+
+```text
+docs/log/imagecache-debug/perf/containerd-imagecache-fast-vsock-20260611.log
+docs/log/imagecache-debug/perf/containerd-imagecache-fast-vsock-format-20260611.log
+```
+
+Conclusion: RMM attach/device creation and mount are already sub-100ms scale. The remaining Runtime `guest_pull` cost is dominated by control-plane connection/request latency and Kata agent/RPC flow around it, not by rootfs data transfer.
