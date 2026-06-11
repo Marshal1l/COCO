@@ -19,3 +19,6 @@
 [submodule "opencca"]
 	path = opencca
 	url = https://github.com/Marshal1l/COCO-opencca.git
+[submodule "linux-host-kernel"]
+	path = linux-host-kernel
+	url = https://github.com/Marshal1l/COCO-linux-host-kernel.git
