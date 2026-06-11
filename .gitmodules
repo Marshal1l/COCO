@@ -22,3 +22,11 @@
 [submodule "linux-host-kernel"]
 	path = linux-host-kernel
 	url = https://github.com/Marshal1l/COCO-linux-host-kernel.git
+[submodule "trustee-cca"]
+	path = trustee-cca
+	url = https://github.com/Marshal1l/COCO-trustee-cca.git
+	branch = cca
+[submodule "rust-ccatoken-trustee-cca"]
+	path = rust-ccatoken-trustee-cca
+	url = https://github.com/Marshal1l/COCO-rust-ccatoken-trustee-cca.git
+	branch = trustee-cca

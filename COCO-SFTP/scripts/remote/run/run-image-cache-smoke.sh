@@ -18,6 +18,7 @@ CGROUP_MANAGER="${COCO_NERDCTL_CGROUP_MANAGER:-cgroupfs}"
 NERDCTL_DNS="${COCO_NERDCTL_DNS:-192.168.31.1}"
 NERDCTL_NET="${COCO_NERDCTL_NET:-coco-bridge}"
 NERDCTL_ADD_HOSTS="${COCO_NERDCTL_ADD_HOSTS:-}"
+NERDCTL_INSECURE_REGISTRY="${COCO_NERDCTL_INSECURE_REGISTRY:-0}"
 KEEP_SMOKE="${COCO_KEEP_SMOKE:-0}"
 CHECK_NETWORK="${COCO_IMAGE_CACHE_CHECK_NETWORK:-1}"
 DISABLE_IMAGE_CVM_PREFETCH="${COCO_DISABLE_IMAGE_CVM_PREFETCH:-0}"
@@ -50,6 +51,13 @@ if [[ -n "$NERDCTL_ADD_HOSTS" ]]; then
     done
 fi
 
+INSECURE_REGISTRY_ARGS=()
+case "$NERDCTL_INSECURE_REGISTRY" in
+    1|true|TRUE|yes|YES|on|ON)
+        INSECURE_REGISTRY_ARGS+=(--insecure-registry)
+        ;;
+esac
+
 cleanup() {
     if [[ "$KEEP_SMOKE" != "1" ]]; then
         nerdctl rm -f "$RUNTIME_CVM_NAME" "$IMAGE_CVM_NAME" >/dev/null 2>&1 || true
@@ -77,6 +85,7 @@ log_install "using image-cache smoke network: net=$NERDCTL_NET dns=${NERDCTL_DNS
 nerdctl rm -f "$RUNTIME_CVM_NAME" "$IMAGE_CVM_NAME" >/dev/null 2>&1 || true
 
 nerdctl run -d \
+    "${INSECURE_REGISTRY_ARGS[@]}" \
     --cgroup-manager="$CGROUP_MANAGER" \
     "${NET_ARGS[@]}" \
     "${DNS_ARGS[@]}" \
@@ -91,6 +100,7 @@ nerdctl run -d \
 sleep "$IMAGE_CVM_BOOT_WAIT"
 
 nerdctl run --rm \
+    "${INSECURE_REGISTRY_ARGS[@]}" \
     --cgroup-manager="$CGROUP_MANAGER" \
     "${NET_ARGS[@]}" \
     "${DNS_ARGS[@]}" \

@@ -31,8 +31,9 @@ Installed in the guest image:
   /usr/local/bin/{api-server-rest,attestation-agent,confidential-data-hub,ttrpc-cdh-tool,vsock-ttrpc-server}
   /root/guest-components/aa.toml
   /root/guest-components/cdh.toml
-  /etc/attestation-agent.conf
-  /etc/confidential-data-hub.conf
+  /etc/attestation-agent.toml
+  /etc/confidential-data-hub.toml
+  /etc/image-rs-config.json
   /etc/resolv.conf
 
 The default debugfs write path updates the image offline and does not require sudo.
@@ -76,6 +77,7 @@ require_inputs() {
     done
     [[ -f "$CONFIG_DIR/attestation-agent.toml" ]] || coco_die "missing AA config: $CONFIG_DIR/attestation-agent.toml"
     [[ -f "$CONFIG_DIR/cdh.toml" ]] || coco_die "missing CDH config: $CONFIG_DIR/cdh.toml"
+    [[ -f "$CONFIG_DIR/image-rs-config.json" ]] || coco_die "missing image-rs config: $CONFIG_DIR/image-rs-config.json"
 }
 
 extract_partition_field() {
@@ -124,8 +126,9 @@ verify_ext4_contents() {
     for path in \
         /root/guest-components/aa.toml \
         /root/guest-components/cdh.toml \
-        /etc/attestation-agent.conf \
-        /etc/confidential-data-hub.conf; do
+        /etc/attestation-agent.toml \
+        /etc/confidential-data-hub.toml \
+        /etc/image-rs-config.json; do
         if coco_file_exists_in_ext4 "$part" "$path"; then
             printf '[ok:image] %s\n' "$path"
         else
@@ -200,8 +203,11 @@ install_payload_into_ext4() {
 
     debugfs_install_file "$part" "$CONFIG_DIR/attestation-agent.toml" /root/guest-components/aa.toml 0100644
     debugfs_install_file "$part" "$CONFIG_DIR/cdh.toml" /root/guest-components/cdh.toml 0100644
-    debugfs_install_file "$part" "$CONFIG_DIR/attestation-agent.toml" /etc/attestation-agent.conf 0100644
-    debugfs_install_file "$part" "$CONFIG_DIR/cdh.toml" /etc/confidential-data-hub.conf 0100644
+    debugfs -w -R "rm /etc/attestation-agent.conf" "$part" >/dev/null 2>&1 || true
+    debugfs -w -R "rm /etc/confidential-data-hub.conf" "$part" >/dev/null 2>&1 || true
+    debugfs_install_file "$part" "$CONFIG_DIR/attestation-agent.toml" /etc/attestation-agent.toml 0100644
+    debugfs_install_file "$part" "$CONFIG_DIR/cdh.toml" /etc/confidential-data-hub.toml 0100644
+    debugfs_install_file "$part" "$CONFIG_DIR/image-rs-config.json" /etc/image-rs-config.json 0100644
 
     tmp_resolv="$(mktemp "${TMPDIR:-/tmp}/coco-guest-resolv.XXXXXX")"
 cat > "$tmp_resolv" <<'EOF'
@@ -281,8 +287,10 @@ install_with_mount() {
 
     sudo install -m0644 "$CONFIG_DIR/attestation-agent.toml" "$MOUNT_DIR/root/guest-components/aa.toml"
     sudo install -m0644 "$CONFIG_DIR/cdh.toml" "$MOUNT_DIR/root/guest-components/cdh.toml"
-    sudo install -m0644 "$CONFIG_DIR/attestation-agent.toml" "$MOUNT_DIR/etc/attestation-agent.conf"
-    sudo install -m0644 "$CONFIG_DIR/cdh.toml" "$MOUNT_DIR/etc/confidential-data-hub.conf"
+    sudo rm -f "$MOUNT_DIR/etc/attestation-agent.conf" "$MOUNT_DIR/etc/confidential-data-hub.conf"
+    sudo install -m0644 "$CONFIG_DIR/attestation-agent.toml" "$MOUNT_DIR/etc/attestation-agent.toml"
+    sudo install -m0644 "$CONFIG_DIR/cdh.toml" "$MOUNT_DIR/etc/confidential-data-hub.toml"
+    sudo install -m0644 "$CONFIG_DIR/image-rs-config.json" "$MOUNT_DIR/etc/image-rs-config.json"
     sudo tee "$MOUNT_DIR/etc/resolv.conf" >/dev/null <<'EOF'
 nameserver 192.168.31.1
 options timeout:2 attempts:3

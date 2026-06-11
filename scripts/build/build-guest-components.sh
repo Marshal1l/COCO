@@ -39,6 +39,33 @@ if [[ -f "$CONFIG_SOURCE_DIR/attestation-agent.toml" ]]; then
 fi
 if [[ -f "$CONFIG_SOURCE_DIR/cdh.toml" ]]; then
     coco_install_data "$CONFIG_SOURCE_DIR/cdh.toml" "$CONFIG_DEST_DIR/cdh.toml"
+    python3 - "$CONFIG_SOURCE_DIR/cdh.toml" "$CONFIG_DEST_DIR/image-rs-config.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+config = tomllib.loads(src.read_text(encoding="utf-8"))
+image = config.get("image", {})
+seed = {}
+for key in (
+    "max_concurrent_layer_downloads_per_image",
+    "insecure_registry_hosts",
+    "extra_root_certificates",
+    "image_pull_proxy",
+    "skip_proxy_ips",
+):
+    if key in image:
+        seed[key] = image[key]
+dst.write_text(json.dumps(seed, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+PY
+    coco_log "generated $CONFIG_DEST_DIR/image-rs-config.json"
 fi
 
 coco_log "guest-components artifacts are ready under $COCO_GUEST_COMPONENTS_ARTIFACTS_DIR"

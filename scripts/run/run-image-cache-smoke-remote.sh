@@ -15,6 +15,7 @@ KEEP_SMOKE="${COCO_KEEP_SMOKE:-0}"
 SERIAL_LOG="${COCO_IMAGE_CACHE_SERIAL_LOG:-0}"
 SERIAL_TAG="${COCO_IMAGE_CACHE_SERIAL_TAG:-imagecache-smoke}"
 DISABLE_IMAGE_CVM_PREFETCH="${COCO_DISABLE_IMAGE_CVM_PREFETCH:-0}"
+NERDCTL_INSECURE_REGISTRY="${COCO_NERDCTL_INSECURE_REGISTRY:-0}"
 DO_PREPARE=0
 CHECK_ONLY=1
 DRY_RUN=0
@@ -50,6 +51,7 @@ Options:
   --prepare              Run full remote network/service preparation first.
   --no-check             Skip the lightweight remote readiness check.
   --no-prefetch          Disable Runtime CVM startup prefetch; it still uses Image CVM sharing on guest_pull.
+  --insecure-registry    Allow nerdctl to pull from a plain HTTP registry.
   --serial-log           Capture RK3588 serial log through the Raspberry Pi.
   --serial-tag TAG       Serial log tag. Default: $SERIAL_TAG.
   --dry-run              Print the SSH command without running it.
@@ -113,6 +115,9 @@ while [[ $# -gt 0 ]]; do
         --no-prefetch)
             DISABLE_IMAGE_CVM_PREFETCH=true
             ;;
+        --insecure-registry)
+            NERDCTL_INSECURE_REGISTRY=1
+            ;;
         --serial-log)
             SERIAL_LOG=1
             ;;
@@ -162,6 +167,7 @@ env_args=(
     "COCO_IMAGE_CVM_BOOT_WAIT=$IMAGE_CVM_BOOT_WAIT"
     "COCO_KEEP_SMOKE=$KEEP_SMOKE"
     "COCO_DISABLE_IMAGE_CVM_PREFETCH=$DISABLE_IMAGE_CVM_PREFETCH"
+    "COCO_NERDCTL_INSECURE_REGISTRY=$NERDCTL_INSECURE_REGISTRY"
 )
 
 remote_root_q="$(printf '%q' "$COCO_SFTP_REMOTE_ROOT")"
