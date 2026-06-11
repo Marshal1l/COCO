@@ -13,6 +13,10 @@
 `sftp_folder` 作为默认项目名。源码和运行产物的关系见
 `docs/COCO_WORKSPACE_LAYOUT.md`。
 
+新控制机从零搭建、自动发现 RK/Pi 地址、恢复 release 大文件、编译 runtime/OpenCCA、
+同步远端并跑 ImageCache smoke 的完整流程见
+`docs/COCO_FROM_ZERO_BUILD_AND_SETUP.md`。
+
 
 # 一.系统环境概述
 
