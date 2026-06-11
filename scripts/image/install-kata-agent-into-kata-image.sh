@@ -5,6 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/lib/coco_paths.sh"
 
 IMAGE="${IMAGE:-$COCO_SFTP_ROOT/images/kata-containers-cca.img}"
 AGENT_BIN="${AGENT_BIN:-$COCO_ARTIFACTS_ROOT/kata-agent/bin/kata-agent}"
+IMAGE_LOCK="${IMAGE_LOCK:-$COCO_ARTIFACTS_ROOT/locks/kata-containers-cca.img.lock}"
 DRY_RUN=0
 VERIFY_ONLY=0
 
@@ -110,7 +111,7 @@ verify_image_contents() {
 }
 
 install_with_debugfs() {
-    coco_require_cmd sfdisk dd debugfs mktemp stat
+    coco_require_cmd sfdisk dd debugfs mktemp stat flock
     [[ -f "$IMAGE" ]] || coco_die "missing Kata image: $IMAGE"
     [[ -f "$AGENT_BIN" ]] || coco_die "missing kata-agent binary: $AGENT_BIN"
     [[ -w "$IMAGE" ]] || coco_die "Kata image is not writable: $IMAGE"
@@ -128,6 +129,16 @@ install_with_debugfs() {
     rm -rf "$tmp"
     trap - RETURN
     coco_log "updated Kata image with rebuilt kata-agent"
+}
+
+with_image_lock() {
+    local lock_dir
+    lock_dir="$(dirname "$IMAGE_LOCK")"
+    coco_ensure_dir "$lock_dir"
+
+    exec 9>"$IMAGE_LOCK"
+    flock 9
+    "$@"
 }
 
 [[ -f "$IMAGE" ]] || coco_die "missing Kata image: $IMAGE"
@@ -148,5 +159,5 @@ if [[ "$DRY_RUN" == "1" ]]; then
     exit 0
 fi
 
-install_with_debugfs
+with_image_lock install_with_debugfs
 verify_image_contents

@@ -8,6 +8,7 @@ BIN_DIR="${BIN_DIR:-$COCO_GUEST_COMPONENTS_ARTIFACTS_DIR/bin}"
 CONFIG_DIR="${CONFIG_DIR:-$COCO_GUEST_COMPONENTS_ARTIFACTS_DIR/config}"
 MOUNT_DIR="${MOUNT_DIR:-$COCO_SFTP_ROOT/images/mnt-kata}"
 INSTALL_METHOD="${INSTALL_METHOD:-debugfs}"
+IMAGE_LOCK="${IMAGE_LOCK:-$COCO_ARTIFACTS_ROOT/locks/kata-containers-cca.img.lock}"
 DRY_RUN=0
 VERIFY_ONLY=0
 INSTALL_IF_MISSING=0
@@ -213,7 +214,7 @@ EOF
 }
 
 install_with_debugfs() {
-    coco_require_cmd sfdisk dd debugfs mktemp stat
+    coco_require_cmd sfdisk dd debugfs mktemp stat flock
     [[ -w "$IMAGE" ]] || coco_die "Kata image is not writable: $IMAGE"
 
     local tmp part
@@ -229,6 +230,16 @@ install_with_debugfs() {
     rm -rf "$tmp"
     trap - RETURN
     coco_log "updated Kata image with guest-components using debugfs"
+}
+
+with_image_lock() {
+    local lock_dir
+    lock_dir="$(dirname "$IMAGE_LOCK")"
+    coco_ensure_dir "$lock_dir"
+
+    exec 9>"$IMAGE_LOCK"
+    flock 9
+    "$@"
 }
 
 install_with_mount() {
@@ -322,7 +333,7 @@ fi
 
 case "$INSTALL_METHOD" in
     debugfs)
-        install_with_debugfs
+        with_image_lock install_with_debugfs
         ;;
     mount)
         install_with_mount

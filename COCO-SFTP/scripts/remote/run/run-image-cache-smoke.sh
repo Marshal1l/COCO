@@ -20,6 +20,16 @@ NERDCTL_NET="${COCO_NERDCTL_NET:-coco-bridge}"
 NERDCTL_ADD_HOSTS="${COCO_NERDCTL_ADD_HOSTS:-}"
 KEEP_SMOKE="${COCO_KEEP_SMOKE:-0}"
 CHECK_NETWORK="${COCO_IMAGE_CACHE_CHECK_NETWORK:-1}"
+DISABLE_IMAGE_CVM_PREFETCH="${COCO_DISABLE_IMAGE_CVM_PREFETCH:-0}"
+
+case "$DISABLE_IMAGE_CVM_PREFETCH" in
+    1|true|TRUE|yes|YES|on|ON)
+        DISABLE_IMAGE_CVM_PREFETCH="true"
+        ;;
+    *)
+        DISABLE_IMAGE_CVM_PREFETCH="false"
+        ;;
+esac
 
 DNS_ARGS=()
 if [[ -n "$NERDCTL_DNS" ]]; then
@@ -88,6 +98,7 @@ nerdctl run --rm \
     --name "$RUNTIME_CVM_NAME" \
     --annotation "io.kubernetes.cri.image-name=$IMAGE_REF_ANNOTATION" \
     --annotation "io.kata-containers.is-image-cvm=false" \
+    --annotation "io.kata-containers.disable-image-cvm-prefetch=$DISABLE_IMAGE_CVM_PREFETCH" \
     --snapshotter guest-pull \
     --runtime io.containerd.kata.v2 \
     "$IMAGE" sh -c "echo coco-runtime-cvm-ok"

@@ -1,0 +1,2 @@
+=== coco rk3588 serial start 2026-06-10T21:28:08+08:00 device=/dev/ttyUSB0 baud=1500000 ===
+stty: /dev/ttyUSB0: Input/output error

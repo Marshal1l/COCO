@@ -14,6 +14,7 @@ SMOKE_TIMEOUT="${COCO_IMAGE_CACHE_SMOKE_TIMEOUT:-240}"
 KEEP_SMOKE="${COCO_KEEP_SMOKE:-0}"
 SERIAL_LOG="${COCO_IMAGE_CACHE_SERIAL_LOG:-0}"
 SERIAL_TAG="${COCO_IMAGE_CACHE_SERIAL_TAG:-imagecache-smoke}"
+DISABLE_IMAGE_CVM_PREFETCH="${COCO_DISABLE_IMAGE_CVM_PREFETCH:-0}"
 DO_PREPARE=0
 CHECK_ONLY=1
 DRY_RUN=0
@@ -48,6 +49,7 @@ Options:
   --keep-smoke           Leave the Image CVM running after the test.
   --prepare              Run full remote network/service preparation first.
   --no-check             Skip the lightweight remote readiness check.
+  --no-prefetch          Disable Runtime CVM startup prefetch; it still uses Image CVM sharing on guest_pull.
   --serial-log           Capture RK3588 serial log through the Raspberry Pi.
   --serial-tag TAG       Serial log tag. Default: $SERIAL_TAG.
   --dry-run              Print the SSH command without running it.
@@ -108,6 +110,9 @@ while [[ $# -gt 0 ]]; do
         --no-check)
             CHECK_ONLY=0
             ;;
+        --no-prefetch)
+            DISABLE_IMAGE_CVM_PREFETCH=true
+            ;;
         --serial-log)
             SERIAL_LOG=1
             ;;
@@ -156,6 +161,7 @@ env_args=(
     "COCO_NERDCTL_CGROUP_MANAGER=$CGROUP_MANAGER"
     "COCO_IMAGE_CVM_BOOT_WAIT=$IMAGE_CVM_BOOT_WAIT"
     "COCO_KEEP_SMOKE=$KEEP_SMOKE"
+    "COCO_DISABLE_IMAGE_CVM_PREFETCH=$DISABLE_IMAGE_CVM_PREFETCH"
 )
 
 remote_root_q="$(printf '%q' "$COCO_SFTP_REMOTE_ROOT")"

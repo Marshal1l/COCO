@@ -1,0 +1,8 @@
+[coco] remote ImageCache smoke: host=root@192.168.31.18 image=docker.m.daocloud.io/library/busybox:latest net=coco-bridge dns=192.168.31.1 wait=15s
+[coco] sshpass -p root ssh -tt -p 22 -oBatchMode=no -oStrictHostKeyChecking=accept-new -oUserKnownHostsFile=/tmp/coco_known_hosts root@192.168.31.18 set\ -euo\ pipefail\;\ cd\ /root/COCO-SFTP\;\ ./scripts/remote/run/check-image-cache-network.sh\;\ nerdctl\ rm\ -f\ coco-runtime-cvm\ coco-image-cvm\ \>/dev/null\ 2\>\&1\ \|\|\ true\;\ COCO_IMAGE=docker.m.daocloud.io/library/busybox:latest\ COCO_IMAGE_REF_ANNOTATION=docker.m.daocloud.io/library/busybox:latest\ COCO_NERDCTL_NET=coco-bridge\ COCO_NERDCTL_DNS=192.168.31.1\ COCO_NERDCTL_CGROUP_MANAGER=cgroupfs\ COCO_IMAGE_CVM_BOOT_WAIT=15\ COCO_KEEP_SMOKE=0\ COCO_IMAGE_CACHE_CHECK_NETWORK=0\ timeout\ 240\ ./scripts/remote/run/run-image-cache-smoke.sh
+[coco-remote] image-cache network is ready: net=coco-bridge dns=192.168.31.1
+[coco-remote] using image-cache smoke network: net=coco-bridge dns=192.168.31.1 image=docker.m.daocloud.io/library/busybox:latest wait=15s
+cf231a4f26b8b6bda9a2c65e9a611b6bafcd633fe6f31fe9a475f0b83503f3f5
+coco-runtime-cvm-ok
+[coco-remote] image-cache smoke run completed with docker.m.daocloud.io/library/busybox:latest
+Connection to 192.168.31.18 closed.
