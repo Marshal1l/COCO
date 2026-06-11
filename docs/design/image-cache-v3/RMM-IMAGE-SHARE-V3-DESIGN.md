@@ -2,6 +2,8 @@
 
 日期：2026-06-10
 
+> 当前最新版机制请以 `docs/design/image-cache-v3/RMM-IMAGE-SHARE-FINAL-DESIGN.md` 为准。本文保留为 V3 设计推导和历史实现记录。
+
 状态：设计草案，作为后续内核、RMM、Firecracker、guest-components 修改记录的主文档。
 
 ## 资料来源和方法
